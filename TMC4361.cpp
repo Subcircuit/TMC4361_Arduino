@@ -36,8 +36,8 @@ void TMC4361::begin(long clockFreq, int csPin, int intPin, int startPin, int rst
   _rstPin = rstPin;
 
   SPI.begin(); //Init SPI hardware
-  _spiSettings = SPISettings(clockFreq/4, MSBFIRST, SPI_MODE3);
-  SPI.usingInterrupt(intPin);
+  _spiSettings = SPISettings(SPI_BAUDRATEPRESCALER_4, MSBFIRST, SPI_MODE3);
+  // SPI.usingInterrupt(intPin);
 
   digitalWrite(_csPin, HIGH);
   pinMode(_csPin, OUTPUT);
@@ -83,7 +83,7 @@ void TMC4361::reset()
   else
   {
     //Write magic value to the reset register
-    writeRegister(TMC4361_RESET_CLK_GATING_REGISTER, 0x525354 << 8);
+    writeRegister(TMC4361_RESET_CLK_GATING_REGISTER, 0x52535400);
   }
 }
 
@@ -110,6 +110,17 @@ bool TMC4361::checkEvent(EventType event)
     writeRegister(TMC4361_EVENTS_REGISTER, 1 << event);
     
   return value;
+}
+
+void TMC4361::setTmc21xConnectMode(int output_format, int cover_data_length, int poll_block_exp, int mode)
+{
+  long SPI_OUT_CONF = (output_format & 0x0f) | ((cover_data_length & 0x7f) << 13);
+  if (mode)  // s/d mode 
+  {
+    SPI_OUT_CONF |= ((poll_block_exp & 0x0f) << 8);
+    setOutputTimings(_defaultStepLength, _defaultDirSetupTime);
+  }
+  writeRegister(TMC4361_SPIOUT_CONF_REGISTER, SPI_OUT_CONF);
 }
 
 void TMC4361::setOutputsPolarity(bool stepInverted, bool dirInverted)
@@ -187,6 +198,11 @@ void TMC4361::setBowValues(long bow1, long bow2, long bow3, long bow4)
 long TMC4361::getTargetPosition()
 {
   return readRegister(TMC4361_X_TARGET_REGISTER);
+}
+
+long TMC4361::getTmcVersion()
+{
+  return readRegister(TMC4361_VERSION_REGISTER);
 }
 
 void TMC4361::setTargetPosition(long position)

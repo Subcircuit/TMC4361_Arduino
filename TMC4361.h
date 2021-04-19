@@ -43,7 +43,7 @@
 #define TMC4361_CLOSE_LOOP_REGISTER 0x1C
 #define TMC4361_DAC_ADDR_REGISTER 0x1D
 #define TMC4361_HOME_SAFETY_MARGIN_REGISTER 0x1E
-#define TMC4361_PWM_FREQ_CHOPSYNC_REGISTER 0x
+#define TMC4361_PWM_FREQ_CHOPSYNC_REGISTER 0x1F
 #define TMC4361_RAMP_MODE_REGISTER 0x20
 #define TMC4361_X_ACTUAL_REGISTER 0x21
 #define TMC4361_V_ACTUAL_REGISTER 0x22
@@ -84,13 +84,17 @@
 #define TMC4361_RESET_CLK_GATING_REGISTER 0x4F
 #define TMC4361_ENCODER_POSITION_REGISTER 0x50
 #define TMC4361_ENCODER_INPUT_RESOLUTION_REGISTER 0x54
-#define TMC4361_COVER_LOW_REGISTER 0x6c
-#define TMC4361_COVER_HIGH_REGISTER 0x6d
-#define TMC4361_VERSION_REGISTER 0x7f
+#define TMC4361_COVER_LOW_REGISTER 0x6C
+#define TMC4361_COVER_HIGH_REGISTER 0x6D
+#define TMC4361_VERSION_REGISTER 0x7F
 
 class TMC4361
 {
 public:
+  enum ConnectMode {
+    SPIMODE = 0,
+    SDMODE
+  };
   enum RampMode {
     VELOCITY_MODE = 0x00,
     POSITIONING_MODE = (0x01 << 2)
@@ -209,6 +213,8 @@ public:
   /* Check event and clear it if necessary */
   bool checkEvent(EventType event);
 
+  void setTmc21xConnectMode(int output_format, int cover_data_length, int poll_block_exp, int mode);
+
   /* Set step/dir outputs polarity
    * if stepInverted is true, LOW indicates an active step
    * if dirInverted is true, HIGH indicates negative direction
@@ -252,6 +258,9 @@ public:
 
   /* Get the target position in steps */
   long getTargetPosition();
+
+  /* Get version number */
+  long getTmcVersion();
 
   /* Set the target position
    * /!\ Set all other motion profile parameters before
